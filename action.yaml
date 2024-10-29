@@ -1,0 +1,191 @@
+name: 'Rearm Build And Submit Release metadata action'
+description: 'Rearm Build And Submit Release metadata action'
+branding:
+  icon: 'anchor'
+  color: 'green'
+inputs:
+  registry_username:
+    description: "Username for image registry"
+    required: true
+  registry_password:
+    description: "Password for image registry"
+    required: true
+  registry_host:
+    description: "Host for image registry"
+    default: null
+    required: false
+  image_namespace:
+    description: "Namespace of the image on registry"
+    required: true
+  image_name:
+    description: "Name of the image"
+    required: true
+  rearm_api_id:
+    description: "Rearm Hub API ID"
+    required: true
+  rearm_api_key:
+    description: "Rearm Hub API KEY"
+    required: true
+  rearm_api_url:
+    description: "Rearm Hub API URL"
+    required: false
+    default: 'https://dev.rearmhq.com'
+  path:
+    description: "Path to the relative to root of the repo (default is '.')"
+    required: false
+    default: .
+  dockerfile_name:
+    description: "Name of the dockerfile (default is 'Dockerfile')"
+    required: false
+    default: Dockerfile
+  ci_metadata:
+    description: "Metadata for CI run, (Optional - default is GitHub)"
+    required: false
+  rearm_project_id:
+    description: "Project UUID for this release if org-wide key is used"
+    required: false
+  push_latest_tag:
+    description: "set to false if you do not want image tagged latest to be pushed"
+    required: false
+    default: 'true'
+  platform_architectures:
+    description: "comma separated list of platform architectures you want to build the image for, default is linux/amd64"
+    required: false
+    default: 'linux/amd64'
+  enable_sbom:
+    required: false
+    default: 'false'
+    description: Generates SBOM and stores it along with the artifact
+runs:
+  using: "composite"
+  steps:
+    - id: setup-rearm
+      name: setup-rearm
+      uses: relizaio/setup-rearm-cli-action@main
+      with: 
+        version: 24.10.15
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      if: ${{ inputs.registry_host == null }}
+      with:
+        username: ${{inputs.registry_username}}
+        password: ${{inputs.registry_password}}
+    - name: Login to Docker Registry
+      uses: docker/login-action@v3
+      if: ${{ inputs.registry_host != null }}
+      with:
+        registry: ${{inputs.registry_host}}
+        username: ${{inputs.registry_username}}
+        password: ${{inputs.registry_password}}
+    - id: get-version
+      name: Get Version
+      uses: relizaio/rearm-get-version@main
+      with: 
+        rearm_api_id: ${{ inputs.rearm_api_id }}
+        rearm_api_key: ${{ inputs.rearm_api_key }}
+        rearm_api_url: ${{inputs.rearm_api_url}}
+        path: ${{inputs.path}}
+        ci_metadata: "${{inputs.ci_metadata}}"
+        rearm_project_id: ${{inputs.rearm_project_id}}
+    - name: Instantiate Rearm status as Rejected to handle possible build failure
+      shell: bash
+      run: |
+        echo "REARM_BUILD_STATUS=rejected" >> $GITHUB_ENV
+        echo "REARM_DO_BUILD=${{ steps.get-version.outputs.rearm_do_build}}" >> $GITHUB_ENV
+    - name: Validate input list
+      shell: bash
+      run: |
+        supported_platforms=('linux/amd64' 'linux/arm64' 'linux/s390x' 'linux/arm/v7' 'linux/arm/v6')
+        input_list=($(echo '${{ inputs.platform_architectures }}' | tr ',' '\n'))
+        if [[ -z "$input_list" ]]; then
+          echo "Platform architectures list is empty"
+          exit 1
+        fi
+        # Check if each element of the input list exists in the enum list
+        for element in "${input_list[@]}"; do
+        found=0
+        for platform in "${supported_platforms[@]}"; do
+          if [[ $platform == $element ]]; then
+            found=1
+            break
+          fi
+        done
+        if [ $found -eq 0 ]; then
+          echo "$element is not a supported platform"
+          exit 1
+        fi
+        done
+    - name: Build and push docker container to Rearm Hub Registry
+      shell: bash
+      if: ${{env.REARM_DO_BUILD == 'true'}}
+      continue-on-error: true
+      run: |
+        cd ${{ inputs.path }}
+        
+        branch_name=${{github.ref_name}}
+        case $branch_name in
+
+          master | main)
+            latest_tag=latest
+            ;;
+
+          *)
+            latest_tag=$branch_name
+            ;;
+        esac
+
+        tags="-t ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.get-version.outputs.rearm_short_version }}"
+
+        if [ "${{inputs.push_latest_tag}}" == "true" ]
+        then
+          tags+=" -t ${{inputs.image_namespace}}/${{inputs.image_name}}:$latest_tag"
+        fi
+
+        # push branch tag for main or master
+        if [ "$latest_tag" != "$branch_name" ]
+        then
+          tags+=" -t ${{inputs.image_namespace}}/${{inputs.image_name}}:$branch_name"
+        fi
+        echo "Building for platforms: ${{ inputs.platform_architectures }}"
+        docker \
+          buildx build --push --platform ${{ inputs.platform_architectures }} \
+          $tags \
+          --build-arg VERSION=${{ steps.get-version.outputs.rearm_full_version }} \
+          --build-arg CI_ENV=github${{github.sha}} \
+          --build-arg GIT_COMMIT=${{github.sha}} \
+          --build-arg GIT_BRANCH=${{github.ref_name}} \
+          -f ${{inputs.dockerfile_name}} .
+          
+        
+        # buildx_inspect=$(docker buildx imagetools inspect ${{inputs.image_namespace}}/${{inputs.image_name}}:$latest_tag)
+        # echo $buildx_inspect
+        docker_sha_256=$(docker buildx imagetools inspect --format "{{json .Manifest}}" ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.get-version.outputs.rearm_short_version }} | jq -r '.digest')
+       
+
+        
+        
+        # save sha256 to env var
+        echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
+        echo "REARM_BUILD_STATUS=complete " >> $GITHUB_ENV
+    - name: Submit metadata to Rearm Hub
+      uses: relizaio/rearm-add-release@main
+      if: ${{env.REARM_DO_BUILD == 'true'}}
+      with:
+        rearm_api_id: ${{ inputs.rearm_api_id }}
+        rearm_api_key: ${{ inputs.rearm_api_key }}
+        rearm_api_url: ${{inputs.rearm_api_url}}
+        image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
+        image_digest: $DOCKER_SHA_256
+        rearm_full_version: ${{ steps.get-version.outputs.rearm_full_version }}
+        rearm_build_start: ${{ steps.get-version.outputs.rearm_build_start }}
+        rearm_build_status: $REARM_BUILD_STATUS
+        rearm_project_id: ${{inputs.rearm_project_id}}
+        enable_sbom: ${{inputs.enable_sbom}}
+        registry_username: ${{inputs.registry_username}}
+        registry_password: ${{inputs.registry_password}}
+        registry_host: ${{inputs.registry_host}}
+        path: ${{inputs.path}}
