@@ -170,7 +170,7 @@ runs:
         
         # save sha256 to env var
         echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
-        echo "REARM_BUILD_STATUS=complete " >> $GITHUB_ENV
+        echo "REARM_BUILD_STATUS=ASSEMBLED " >> $GITHUB_ENV
     - name: Submit metadata to Rearm Hub
       uses: relizaio/rearm-add-release@main
       if: ${{env.REARM_DO_BUILD == 'true'}}
