@@ -41,8 +41,8 @@ inputs:
   ci_metadata:
     description: "Metadata for CI run, (Optional - default is GitHub)"
     required: false
-  rearm_project_id:
-    description: "Project UUID for this release if org-wide key is used"
+  rearm_component_id:
+    description: "Component UUID for this release if org-wide key is used"
     required: false
   push_latest_tag:
     description: "set to false if you do not want image tagged latest to be pushed"
@@ -90,7 +90,7 @@ runs:
         rearm_api_url: ${{inputs.rearm_api_url}}
         path: ${{inputs.path}}
         ci_metadata: "${{inputs.ci_metadata}}"
-        rearm_project_id: ${{inputs.rearm_project_id}}
+        rearm_component_id: ${{inputs.rearm_component_id}}
     - name: Instantiate Rearm status as Rejected to handle possible build failure
       shell: bash
       run: |
@@ -183,7 +183,7 @@ runs:
         rearm_full_version: ${{ steps.get-version.outputs.rearm_full_version }}
         rearm_build_start: ${{ steps.get-version.outputs.rearm_build_start }}
         rearm_build_status: $REARM_BUILD_STATUS
-        rearm_project_id: ${{inputs.rearm_project_id}}
+        rearm_component_id: ${{inputs.rearm_component_id}}
         enable_sbom: ${{inputs.enable_sbom}}
         registry_username: ${{inputs.registry_username}}
         registry_password: ${{inputs.registry_password}}

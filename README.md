@@ -22,8 +22,8 @@ steps:
 ## Inputs
 The actions supports the following inputs:
 
-- `rearm_api_id`: The project API ID obtained from Rearm.
-- `rearm_api_key`: The project API Key obtained from Rearm.
+- `rearm_api_id`: The component API ID obtained from Rearm.
+- `rearm_api_key`: The component API Key obtained from Rearm.
 - `registry_username`: Username for the image registry.
 - `registry_password`: Password for the image registry.
 - `registry_host`: Image registry host.
@@ -31,7 +31,7 @@ The actions supports the following inputs:
 - `image_name`: Name of the image.
 - `path`: Path to the relative to root of the repo (default is '.').
 - `dockerfile_name`: Name of the dockerfile (default is 'Dockerfile').
-- `rearm_project_id`: Project UUID if an org-wide key is used.
+- `rearm_component_id`: component UUID if an org-wide key is used.
 - `push_latest_tag`: Whether to push image with 'latest' tag also, optional, default: `true`
 - `platform_architectures`: A comma separated list of platform architectures, optional, default: `'linux/amd64'`; supported platforms: `'linux/amd64 linux/arm64 linux/s390x linux/arm/v7 linux/arm/v6'`
 
