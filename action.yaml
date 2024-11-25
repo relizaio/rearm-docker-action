@@ -184,7 +184,6 @@ runs:
         rearm_build_start: ${{ steps.get-version.outputs.rearm_build_start }}
         rearm_build_status: $REARM_BUILD_STATUS
         rearm_component_id: ${{inputs.rearm_component_id}}
-        send_sce_data: true
         enable_sbom: ${{inputs.enable_sbom}}
         registry_username: ${{inputs.registry_username}}
         registry_password: ${{inputs.registry_password}}
