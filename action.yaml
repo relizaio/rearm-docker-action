@@ -59,7 +59,7 @@ inputs:
   source_code_sbom_type:
     required: false
     default: 'none'
-    description: Generates SBOM based on source code analysis, possible values: npm, other, none
+    description: "Generates SBOM based on source code analysis, possible values: npm, other, none"
 runs:
   using: "composite"
   steps:
