@@ -56,6 +56,10 @@ inputs:
     required: false
     default: 'false'
     description: Generates SBOM and stores it along with the artifact
+  source_code_sbom_type:
+    required: false
+    default: 'none'
+    description: Generates SBOM based on source code analysis, possible values: npm, other, none
 runs:
   using: "composite"
   steps:
@@ -185,6 +189,7 @@ runs:
         rearm_build_status: $REARM_BUILD_STATUS
         rearm_component_id: ${{inputs.rearm_component_id}}
         enable_sbom: ${{inputs.enable_sbom}}
+        source_code_sbom_type: ${{inputs.source_code_sbom_type}}
         registry_username: ${{inputs.registry_username}}
         registry_password: ${{inputs.registry_password}}
         registry_host: ${{inputs.registry_host}}
