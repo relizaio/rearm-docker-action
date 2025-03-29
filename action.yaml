@@ -68,6 +68,9 @@ runs:
       uses: relizaio/setup-rearm-cli-action@main
       with: 
         version: 25.03.0
+    - name: Display rearm version
+      shell: bash
+      run: rearm version
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
     - name: Set up Docker Buildx
