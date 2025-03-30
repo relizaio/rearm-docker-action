@@ -134,14 +134,15 @@ runs:
         cd ${{ inputs.path }}
         
         branch_name=${{github.ref_name}}
-        case $branch_name in
+        safe_branch_name=$(echo -n $branch_name | tr -dc '[:alnum:]-_.')
+        case $safe_branch_name in
 
           master | main)
             latest_tag=latest
             ;;
 
           *)
-            latest_tag=$branch_name
+            latest_tag=$safe_branch_name
             ;;
         esac
 
@@ -153,9 +154,9 @@ runs:
         fi
 
         # push branch tag for main or master
-        if [ "$latest_tag" != "$branch_name" ]
+        if [ "$latest_tag" != "$safe_branch_name" ]
         then
-          tags+=" -t ${{inputs.image_namespace}}/${{inputs.image_name}}:$branch_name"
+          tags+=" -t ${{inputs.image_namespace}}/${{inputs.image_name}}:$safe_branch_name"
         fi
         echo "Building for platforms: ${{ inputs.platform_architectures }}"
         docker \
