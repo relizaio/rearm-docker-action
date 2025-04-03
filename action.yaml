@@ -67,7 +67,7 @@ runs:
       name: setup-rearm
       uses: relizaio/setup-rearm-cli-action@main
       with: 
-        version: 25.03.1
+        version: 25.03.2
     - name: Display rearm version
       shell: bash
       run: rearm version
