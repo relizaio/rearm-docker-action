@@ -2,7 +2,7 @@
 
 ## About
 
-GitHub Action to Build a Docker image, push it to the registry and submit the release metadata to Rearm.
+GitHub Action to Build a Docker image, push it to the registry and submit the release metadata to [ReARM](https://github.com/relizaio/rearm).
 
 ## Usage
 
