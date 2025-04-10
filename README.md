@@ -8,7 +8,7 @@ GitHub Action to Build a Docker image, push it to the registry and submit the re
 
 ```yaml
 steps:
-- uses: relizaio/rearm-docker-action@1.9
+- uses: relizaio/rearm-docker-action@1.0.0
   with:
     rearm_api_id: <api-id-obtained-from-rearmhub>
     rearm_api_key: <api-key-obtained-from-rearmhub>
