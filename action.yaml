@@ -60,6 +60,10 @@ inputs:
     required: false
     default: 'none'
     description: "Generates SBOM based on source code analysis, possible values: npm, other, none"
+  enable_public_cosign_sigstore:
+    required: false
+    default: 'false'
+    description: "Sign deliverables and SBOMs using public sigstore via cosign"
 runs:
   using: "composite"
   steps:
@@ -199,3 +203,4 @@ runs:
         registry_password: ${{inputs.registry_password}}
         registry_host: ${{inputs.registry_host}}
         path: ${{inputs.path}}
+        enable_public_cosign_sigstore: ${{inputs.enable_public_cosign_sigstore}}
