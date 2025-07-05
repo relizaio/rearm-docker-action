@@ -69,24 +69,24 @@ runs:
   steps:
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/setup-rearm-cli-action@main
+      uses: relizaio/setup-rearm-cli-action@4cf6087e5ba79bcd1be9ffffcda853fbf2207ad6 # v1.0.0
       with: 
         version: 25.06.1
     - name: Display rearm version
       shell: bash
       run: rearm version
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    - name: Login to DockerHub
-      uses: docker/login-action@v3
+      uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+    - name: Login to Docker Hub
+      uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
       if: ${{ inputs.registry_host == null }}
       with:
         username: ${{inputs.registry_username}}
         password: ${{inputs.registry_password}}
-    - name: Login to Docker Registry
-      uses: docker/login-action@v3
+    - name: Login to other Docker Registry
+      uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
       if: ${{ inputs.registry_host != null }}
       with:
         registry: ${{inputs.registry_host}}
@@ -94,7 +94,7 @@ runs:
         password: ${{inputs.registry_password}}
     - id: get-version
       name: Get Version
-      uses: relizaio/rearm-get-version@main
+      uses: relizaio/rearm-get-version@2acd00ef588ea9ac01f5111e5f8865a599ad05c8 # v1.0.0
       with: 
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -183,8 +183,8 @@ runs:
         # save sha256 to env var
         echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
         echo "REARM_BUILD_STATUS=DRAFT" >> $GITHUB_ENV
-    - name: Submit metadata to Rearm Hub
-      uses: relizaio/rearm-add-release@main
+    - name: Submit metadata to ReARM
+      uses: relizaio/rearm-add-release@0b7d28458b876343a4c8e788c7bce14b7ac8eb98 # v1.0.0
       if: ${{env.REARM_DO_BUILD == 'true'}}
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
