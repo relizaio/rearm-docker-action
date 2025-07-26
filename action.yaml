@@ -195,6 +195,7 @@ runs:
         rearm_full_version: ${{ steps.get-version.outputs.rearm_full_version }}
         rearm_short_version: ${{ steps.get-version.outputs.rearm_short_version }}
         rearm_build_start: ${{ steps.get-version.outputs.rearm_build_start }}
+        last_commit: ${{ steps.get-version.outputs.rearm_last_commit }}
         rearm_build_status: $REARM_BUILD_STATUS
         rearm_component_id: ${{inputs.rearm_component_id}}
         enable_sbom: ${{inputs.enable_sbom}}
