@@ -64,6 +64,14 @@ inputs:
     required: false
     default: 'false'
     description: "Sign deliverables and SBOMs using public sigstore via cosign"
+  enable_codeql:
+    required: false
+    default: 'false'
+    description: "Enable CodeQL analysis"
+  codeql_language:
+    required: false
+    default: 'none'
+    description: "Language to analyze with CodeQL"
 runs:
   using: "composite"
   steps:
@@ -71,7 +79,7 @@ runs:
       name: setup-rearm
       uses: relizaio/setup-rearm-cli-action@4cf6087e5ba79bcd1be9ffffcda853fbf2207ad6 # v1.0.0
       with: 
-        version: 25.07.1
+        version: 25.08.4
     - name: Display rearm version
       shell: bash
       run: rearm version
@@ -184,7 +192,7 @@ runs:
         echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
         echo "REARM_BUILD_STATUS=DRAFT" >> $GITHUB_ENV
     - name: Submit metadata to ReARM
-      uses: relizaio/rearm-add-release@f79bcf4636f51bf20b2a457758ec9aeacedd2b4c # v1.2.0
+      uses: relizaio/rearm-add-release@fdd4b0f92f85d57dff4cde0beff8a6e8982d25b8 # v1.3.0
       if: ${{env.REARM_DO_BUILD == 'true'}}
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
@@ -205,3 +213,6 @@ runs:
         registry_host: ${{inputs.registry_host}}
         path: ${{inputs.path}}
         enable_public_cosign_sigstore: ${{inputs.enable_public_cosign_sigstore}}
+        enable_codeql: ${{inputs.enable_codeql}}
+        codeql_language: ${{inputs.codeql_language}}
+        finalize_release: "true"
