@@ -72,6 +72,10 @@ inputs:
     required: false
     default: 'none'
     description: "Language to analyze with CodeQL"
+  successful_build_lifecycle:
+    required: false
+    default: 'ASSEMBLED'
+    description: "Status on build success to be set on ReARM (DRAFT or ASSEMBLED)"
 runs:
   using: "composite"
   steps:
@@ -113,7 +117,7 @@ runs:
     - name: Instantiate Rearm status as Rejected to handle possible build failure
       shell: bash
       run: |
-        echo "REARM_BUILD_STATUS=rejected" >> $GITHUB_ENV
+        echo "REARM_BUILD_LIFECYLE=REJECTED" >> $GITHUB_ENV
         echo "REARM_DO_BUILD=${{ steps.get-version.outputs.rearm_do_build}}" >> $GITHUB_ENV
     - name: Validate input list
       shell: bash
@@ -190,7 +194,7 @@ runs:
         
         # save sha256 to env var
         echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
-        echo "REARM_BUILD_STATUS=DRAFT" >> $GITHUB_ENV
+        echo "REARM_BUILD_LIFECYLE=${{inputs.successful_build_lifecycle}}" >> $GITHUB_ENV
     - name: Submit metadata to ReARM
       uses: relizaio/rearm-add-release@fdd4b0f92f85d57dff4cde0beff8a6e8982d25b8 # v1.3.0
       if: ${{env.REARM_DO_BUILD == 'true'}}
@@ -204,7 +208,7 @@ runs:
         rearm_short_version: ${{ steps.get-version.outputs.rearm_short_version }}
         rearm_build_start: ${{ steps.get-version.outputs.rearm_build_start }}
         last_commit: ${{ steps.get-version.outputs.rearm_last_commit }}
-        rearm_build_status: $REARM_BUILD_STATUS
+        rearm_build_status: $REARM_BUILD_LIFECYLE
         rearm_component_id: ${{inputs.rearm_component_id}}
         enable_sbom: ${{inputs.enable_sbom}}
         source_code_sbom_type: ${{inputs.source_code_sbom_type}}
