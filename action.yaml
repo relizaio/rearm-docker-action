@@ -196,7 +196,7 @@ runs:
         echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
         echo "REARM_BUILD_LIFECYLE=${{inputs.successful_build_lifecycle}}" >> $GITHUB_ENV
     - name: Submit metadata to ReARM
-      uses: relizaio/rearm-add-release@c48ae6858c68c452fffcf009338229118e95bd50 # v1.3.2
+      uses: relizaio/rearm-add-release@29f66f9e83fefa2b8ce7a38e12a6ca985f85db18 # v1.3.2
       if: ${{env.REARM_DO_BUILD == 'true'}}
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
