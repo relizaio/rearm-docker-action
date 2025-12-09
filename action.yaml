@@ -76,14 +76,28 @@ inputs:
     required: false
     default: 'ASSEMBLED'
     description: "Status on build success to be set on ReARM (DRAFT or ASSEMBLED)"
+  enable_shiftleftcyber:
+    required: false
+    default: 'false'
+    description: "Enable ShiftLeftCyber signing of SBOMs"
+  shiftleftcyber_pub_key_id:
+    required: false
+    default: ''
+    description: "Public key id to sign with ShiftLeftCyber"
+  shiftleftcyber_host:
+    required: false
+    default: ''
+    description: "ShiftLeftCyber host"
+  shiftleftcyber_key:
+    required: false
+    default: ''
+    description: "ShiftLeftCyber API key"
 runs:
   using: "composite"
   steps:
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/setup-rearm-cli-action@c2a544105e7f1572057cbe437fae410d585a240b # v1.1.0
-      with: 
-        version: 25.12.0
+      uses: relizaio/setup-rearm-cli-action@331cbaef1a0f8ad15cf0a6cc54a4af8134b89ea0 # v1.1.1 - experimental
     - name: Display rearm version
       shell: bash
       run: rearm version
@@ -196,7 +210,7 @@ runs:
         echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
         echo "REARM_BUILD_LIFECYLE=${{inputs.successful_build_lifecycle}}" >> $GITHUB_ENV
     - name: Submit metadata to ReARM
-      uses: relizaio/rearm-add-release@4f6d54df516dfb4d3122519980bed619f233e231 # v1.5.0 - experimental
+      uses: relizaio/rearm-add-release@9260506bedf67ccf2a25db834a201d38062a0930 # v1.5.0 - experimental
       if: ${{env.REARM_DO_BUILD == 'true'}}
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
@@ -220,6 +234,10 @@ runs:
         enable_codeql: ${{inputs.enable_codeql}}
         codeql_language: ${{inputs.codeql_language}}
         finalize_release: "true"
+        enable_shiftleftcyber: ${{inputs.enable_shiftleftcyber}}
+        shiftleftcyber_pub_key_id: ${{inputs.shiftleftcyber_pub_key_id}}
+        shiftleftcyber_host: ${{inputs.shiftleftcyber_host}}
+        shiftleftcyber_key: ${{inputs.shiftleftcyber_key}}
 post:
   shell: bash
   run: |
