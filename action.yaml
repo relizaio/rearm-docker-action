@@ -21,15 +21,15 @@ inputs:
     description: "Name of the image"
     required: true
   rearm_api_id:
-    description: "Rearm Hub API ID"
+    description: "ReARM API ID"
     required: true
   rearm_api_key:
-    description: "Rearm Hub API KEY"
+    description: "ReARM API KEY"
     required: true
   rearm_api_url:
-    description: "Rearm Hub API URL"
+    description: "ReARM API URL"
     required: false
-    default: 'https://dev.rearmhq.com'
+    default: 'https://demo.rearmhq.com'
   path:
     description: "Path to the relative to root of the repo (default is '.')"
     required: false
