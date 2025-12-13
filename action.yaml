@@ -76,28 +76,28 @@ inputs:
     required: false
     default: 'ASSEMBLED'
     description: "Status on build success to be set on ReARM (DRAFT or ASSEMBLED)"
-  enable_shiftleftcyber:
+  enable_securesbom:
     required: false
     default: 'false'
-    description: "Enable ShiftLeftCyber signing of SBOMs"
-  shiftleftcyber_pub_key_id:
+    description: "Enable SecureSBOM by ShiftLeftCyber signing of SBOMs"
+  securesbom_pub_key_id:
     required: false
     default: ''
-    description: "Public key id to sign with ShiftLeftCyber"
-  shiftleftcyber_host:
+    description: "Public key id to sign with SecureSBOM by ShiftLeftCyber"
+  securesbom_host:
     required: false
     default: ''
-    description: "ShiftLeftCyber host"
-  shiftleftcyber_key:
+    description: "SecureSBOM (by ShiftLeftCyber) host"
+  securesbom_api_key:
     required: false
     default: ''
-    description: "ShiftLeftCyber API key"
+    description: "SecureSBOM (by ShiftLeftCyber) API key"
 runs:
   using: "composite"
   steps:
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/setup-rearm-cli-action@331cbaef1a0f8ad15cf0a6cc54a4af8134b89ea0 # v1.1.1 - experimental
+      uses: relizaio/setup-rearm-cli-action@07bb6a8f7bffd32fb2d063e66f73980806459de0 # v1.2.0
     - name: Display rearm version
       shell: bash
       run: rearm version
@@ -210,7 +210,7 @@ runs:
         echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
         echo "REARM_BUILD_LIFECYLE=${{inputs.successful_build_lifecycle}}" >> $GITHUB_ENV
     - name: Submit metadata to ReARM
-      uses: relizaio/rearm-add-release@1ffb52ca10d54677e382d532c3fb6ce19917fd7d # v1.5.0 - experimental
+      uses: relizaio/rearm-add-release@15209f2bfaed678f0ddcaacb67b85b5adcf51f47 # v1.5.0
       if: ${{env.REARM_DO_BUILD == 'true'}}
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
@@ -234,10 +234,10 @@ runs:
         enable_codeql: ${{inputs.enable_codeql}}
         codeql_language: ${{inputs.codeql_language}}
         finalize_release: "true"
-        enable_shiftleftcyber: ${{inputs.enable_shiftleftcyber}}
-        shiftleftcyber_pub_key_id: ${{inputs.shiftleftcyber_pub_key_id}}
-        shiftleftcyber_host: ${{inputs.shiftleftcyber_host}}
-        shiftleftcyber_key: ${{inputs.shiftleftcyber_key}}
+        enable_securesbom: ${{inputs.enable_securesbom}}
+        securesbom_pub_key_id: ${{inputs.securesbom_pub_key_id}}
+        securesbom_host: ${{inputs.securesbom_host}}
+        securesbom_api_key: ${{inputs.securesbom_api_key}}
 post:
   shell: bash
   run: |
