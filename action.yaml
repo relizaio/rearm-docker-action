@@ -97,7 +97,7 @@ runs:
   steps:
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/setup-rearm-cli-action@07bb6a8f7bffd32fb2d063e66f73980806459de0 # v1.2.0
+      uses: relizaio/setup-rearm-cli-action@c13e9de63cca5fdc18c72a7cded3e6a27d041d13 # v1.2.1
     - name: Display rearm version
       shell: bash
       run: rearm version
