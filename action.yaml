@@ -103,13 +103,13 @@ runs:
       run: rearm version
     - id: rearm-initialize
       name: Initialize ReARM Flow
-      uses: relizaio/rearm-initialize@55ed9302d62c2b051aca61319ea51e06def423ca # v1.0.0 - experimental
+      uses: relizaio/rearm-initialize@main # v1.0.0 - experimental
       with: 
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
         rearm_api_url: ${{inputs.rearm_api_url}}
-        path: ${{inputs.path}}
-        rearm_component_id: ${{inputs.rearm_component_id}}
+        repo_path: ${{inputs.path}}
+        component: ${{inputs.rearm_component_id}}
     - name: Set up QEMU
       uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
     - name: Set up Docker Buildx
