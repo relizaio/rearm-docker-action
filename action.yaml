@@ -175,7 +175,7 @@ runs:
             ;;
         esac
 
-        tags="-t ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.get-version.outputs.rearm_short_version }}"
+        tags="-t ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.rearm-initialize.outputs.short_version }}"
 
         if [ "${{inputs.push_latest_tag}}" == "true" ]
         then
@@ -191,7 +191,7 @@ runs:
         docker \
           buildx build --push --platform ${{ inputs.platform_architectures }} \
           $tags \
-          --build-arg VERSION=${{ steps.get-version.outputs.rearm_full_version }} \
+          --build-arg VERSION=${{ steps.rearm-initialize.outputs.full_version }} \
           --build-arg CI_ENV=github${{github.sha}} \
           --build-arg GIT_COMMIT=${{github.sha}} \
           --build-arg GIT_BRANCH=${{github.ref_name}} \
@@ -200,7 +200,7 @@ runs:
         
         # buildx_inspect=$(docker buildx imagetools inspect ${{inputs.image_namespace}}/${{inputs.image_name}}:$latest_tag)
         # echo $buildx_inspect
-        docker_sha_256=$(docker buildx imagetools inspect --format "{{json .Manifest}}" ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.get-version.outputs.rearm_short_version }} | jq -r '.digest')
+        docker_sha_256=$(docker buildx imagetools inspect --format "{{json .Manifest}}" ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.rearm-initialize.outputs.short_version }} | jq -r '.digest')
        
         # save sha256 to env var
         echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
@@ -214,10 +214,10 @@ runs:
         rearm_api_url: ${{inputs.rearm_api_url}}
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: $DOCKER_SHA_256
-        rearm_full_version: ${{ steps.get-version.outputs.rearm_full_version }}
-        rearm_short_version: ${{ steps.get-version.outputs.rearm_short_version }}
-        rearm_build_start: ${{ steps.get-version.outputs.rearm_build_start }}
-        last_commit: ${{ steps.get-version.outputs.rearm_last_commit }}
+        rearm_full_version: ${{ steps.rearm-initialize.outputs.full_version }}
+        rearm_short_version: ${{ steps.rearm-initialize.outputs.short_version }}
+        rearm_build_start: ${{ steps.rearm-initialize.outputs.build_start }}
+        last_commit: ${{ steps.rearm-initialize.outputs.last_commit }}
         rearm_build_status: $REARM_BUILD_LIFECYLE
         rearm_component_id: ${{inputs.rearm_component_id}}
         enable_sbom: ${{inputs.enable_sbom}}
