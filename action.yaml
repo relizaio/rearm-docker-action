@@ -95,6 +95,10 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Checkout
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        fetch-depth: 0 
     - id: setup-rearm
       name: setup-rearm
       uses: relizaio/setup-rearm-cli-action@c13e9de63cca5fdc18c72a7cded3e6a27d041d13 # v1.2.1
@@ -155,6 +159,7 @@ runs:
       if: ${{env.REARM_DO_BUILD == 'true'}}
       continue-on-error: true
       run: |
+        cd ${{ github.workspace }}
         cd ${{ inputs.path }}
         
         branch_name=${{github.ref_name}}
