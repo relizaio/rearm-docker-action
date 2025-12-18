@@ -101,6 +101,15 @@ runs:
     - name: Display rearm version
       shell: bash
       run: rearm version
+    - id: rearm-initialize
+      name: Initialize ReARM Flow
+      uses: relizaio/rearm-initialize@55ed9302d62c2b051aca61319ea51e06def423ca # v1.0.0 - experimental
+      with: 
+        rearm_api_id: ${{ inputs.rearm_api_id }}
+        rearm_api_key: ${{ inputs.rearm_api_key }}
+        rearm_api_url: ${{inputs.rearm_api_url}}
+        path: ${{inputs.path}}
+        rearm_component_id: ${{inputs.rearm_component_id}}
     - name: Set up QEMU
       uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
     - name: Set up Docker Buildx
@@ -118,21 +127,6 @@ runs:
         registry: ${{inputs.registry_host}}
         username: ${{inputs.registry_username}}
         password: ${{inputs.registry_password}}
-    - id: get-version
-      name: Get Version
-      uses: relizaio/rearm-get-version@4a9be1ed7056054889e4a9c72d7670647fd975bf # v1.1.0
-      with: 
-        rearm_api_id: ${{ inputs.rearm_api_id }}
-        rearm_api_key: ${{ inputs.rearm_api_key }}
-        rearm_api_url: ${{inputs.rearm_api_url}}
-        path: ${{inputs.path}}
-        ci_metadata: "${{inputs.ci_metadata}}"
-        rearm_component_id: ${{inputs.rearm_component_id}}
-    - name: Instantiate Rearm status as Rejected to handle possible build failure
-      shell: bash
-      run: |
-        echo "REARM_BUILD_LIFECYLE=REJECTED" >> $GITHUB_ENV
-        echo "REARM_DO_BUILD=${{ steps.get-version.outputs.rearm_do_build}}" >> $GITHUB_ENV
     - name: Validate input list
       shell: bash
       run: |
@@ -203,9 +197,6 @@ runs:
         # echo $buildx_inspect
         docker_sha_256=$(docker buildx imagetools inspect --format "{{json .Manifest}}" ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.get-version.outputs.rearm_short_version }} | jq -r '.digest')
        
-
-        
-        
         # save sha256 to env var
         echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
         echo "REARM_BUILD_LIFECYLE=${{inputs.successful_build_lifecycle}}" >> $GITHUB_ENV
