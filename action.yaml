@@ -105,9 +105,9 @@ runs:
     - name: Display rearm version
       shell: bash
       run: rearm version
-    - id: rearm-initialize
+    - id: init
       name: Initialize ReARM Flow
-      uses: relizaio/rearm-initialize@main # v1.0.0 - experimental
+      uses: relizaio/rearm-actions/initialize@main # v1.0.0 - experimental
       with: 
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -175,7 +175,7 @@ runs:
             ;;
         esac
 
-        tags="-t ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.rearm-initialize.outputs.short_version }}"
+        tags="-t ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.init.outputs.short_version }}"
 
         if [ "${{inputs.push_latest_tag}}" == "true" ]
         then
@@ -191,7 +191,7 @@ runs:
         docker \
           buildx build --push --platform ${{ inputs.platform_architectures }} \
           $tags \
-          --build-arg VERSION=${{ steps.rearm-initialize.outputs.full_version }} \
+          --build-arg VERSION=${{ steps.init.outputs.full_version }} \
           --build-arg CI_ENV=github${{github.sha}} \
           --build-arg GIT_COMMIT=${{github.sha}} \
           --build-arg GIT_BRANCH=${{github.ref_name}} \
@@ -200,40 +200,57 @@ runs:
         
         # buildx_inspect=$(docker buildx imagetools inspect ${{inputs.image_namespace}}/${{inputs.image_name}}:$latest_tag)
         # echo $buildx_inspect
-        docker_sha_256=$(docker buildx imagetools inspect --format "{{json .Manifest}}" ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.rearm-initialize.outputs.short_version }} | jq -r '.digest')
+        docker_sha_256=$(docker buildx imagetools inspect --format "{{json .Manifest}}" ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.init.outputs.short_version }} | jq -r '.digest')
        
         # save sha256 to env var
         echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
-        echo "REARM_BUILD_LIFECYLE=${{inputs.successful_build_lifecycle}}" >> $GITHUB_ENV
-    - name: Submit metadata to ReARM
-      uses: relizaio/rearm-add-release@d40cd001b969b385e0f5ad34e0f770d93df3a179 # v1.5.1
-      if: ${{env.REARM_DO_BUILD == 'true'}}
+        echo "REARM_BUILD_LIFECYCLE=${{inputs.successful_build_lifecycle}}" >> $GITHUB_ENV
+    - name: Generate and sign SBOMs
+      if: steps.init.outputs.do_build == 'true'
+      id: sbom
+      uses: relizaio/rearm-actions/sbom-sign-scan@main
+      with:
+        image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
+        image_digest: $DOCKER_SHA_256
+        rearm_short_version: ${{ steps.init.outputs.short_version }}
+        rearm_full_version: ${{ steps.init.outputs.full_version }}
+        enable_sbom: ${{inputs.enable_sbom}}
+        source_code_sbom_type: ${{inputs.source_code_sbom_type}}
+        registry_username: ${{ secrets.DOCKER_USERNAME }}
+        registry_password: ${{ secrets.DOCKER_PASSWORD }}
+        registry_host: ${{inputs.registry_host}}
+        repo_path: ${{inputs.path}}
+        enable_public_cosign_sigstore: ${{inputs.enable_public_cosign_sigstore}}
+        enable_codeql: ${{inputs.enable_codeql}}
+        codeql_language: ${{inputs.codeql_language}}
+        enable_securesbom: ${{inputs.enable_securesbom}}
+        securesbom_pub_key_id: ${{inputs.securesbom_pub_key_id}}
+        securesbom_host: ${{inputs.securesbom_host}}
+        securesbom_api_key: ${{inputs.securesbom_api_key}}
+    - name: Submit metadata to ReARM and Finalize
+      if: steps.init.outputs.do_build == 'true'
+      uses: relizaio/rearm-actions/finalize@main
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
         rearm_api_url: ${{inputs.rearm_api_url}}
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: $DOCKER_SHA_256
-        rearm_full_version: ${{ steps.rearm-initialize.outputs.full_version }}
-        rearm_short_version: ${{ steps.rearm-initialize.outputs.short_version }}
-        rearm_build_start: ${{ steps.rearm-initialize.outputs.build_start }}
-        last_commit: ${{ steps.rearm-initialize.outputs.last_commit }}
-        rearm_build_status: $REARM_BUILD_LIFECYLE
-        rearm_component_id: ${{inputs.rearm_component_id}}
-        enable_sbom: ${{inputs.enable_sbom}}
-        source_code_sbom_type: ${{inputs.source_code_sbom_type}}
-        registry_username: ${{inputs.registry_username}}
-        registry_password: ${{inputs.registry_password}}
-        registry_host: ${{inputs.registry_host}}
-        path: ${{inputs.path}}
-        enable_public_cosign_sigstore: ${{inputs.enable_public_cosign_sigstore}}
-        enable_codeql: ${{inputs.enable_codeql}}
-        codeql_language: ${{inputs.codeql_language}}
+        rearm_build_start: ${{ steps.init.outputs.build_start }}
+        rearm_short_version: ${{ steps.init.outputs.short_version }}
+        rearm_full_version: ${{ steps.init.outputs.full_version }}
+        rearm_build_lifecycle: ${{env.REARM_BUILD_LIFECYCLE}}
+        commit_list: ${{ steps.init.outputs.commit_list }}
+        sce_commit: ${{ steps.init.outputs.sce_commit }}
+        sce_commit_message: ${{ steps.init.outputs.sce_commit_message }}
+        sce_commit_date: ${{ steps.init.outputs.sce_commit_date }}
+        sce_vcs_uri: ${{ steps.init.outputs.sce_vcs_uri }}
+        scearts: ${{ steps.sbom.outputs.scearts }}
+        odelartsjson: ${{ steps.sbom.outputs.odelartsjson }}
+        purl: ${{ steps.sbom.outputs.purl }}
+        repo_path: ${{inputs.path}}
         finalize_release: "true"
-        enable_securesbom: ${{inputs.enable_securesbom}}
-        securesbom_pub_key_id: ${{inputs.securesbom_pub_key_id}}
-        securesbom_host: ${{inputs.securesbom_host}}
-        securesbom_api_key: ${{inputs.securesbom_api_key}}
+        component: ${{inputs.rearm_component_id}}
 post:
   shell: bash
   run: |
