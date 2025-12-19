@@ -101,7 +101,7 @@ runs:
         fetch-depth: 0 
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/setup-rearm-cli-action@c13e9de63cca5fdc18c72a7cded3e6a27d041d13 # v1.2.1
+      uses: relizaio/rearm-actions/setup-cli@main
     - name: Display rearm version
       shell: bash
       run: rearm version
