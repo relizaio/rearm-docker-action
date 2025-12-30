@@ -101,13 +101,13 @@ runs:
         fetch-depth: 0 
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/rearm-actions/setup-cli@main
+      uses: relizaio/rearm-actions/setup-cli@b570579b24c24a8e1a949e8cfa50b0ddfcde2ccc # v1.0.0
     - name: Display rearm version
       shell: bash
       run: rearm version
     - id: init
       name: Initialize ReARM Flow
-      uses: relizaio/rearm-actions/initialize@main # v1.0.0 - experimental
+      uses: relizaio/rearm-actions/initialize@b570579b24c24a8e1a949e8cfa50b0ddfcde2ccc # v1.0.0
       with: 
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -208,7 +208,7 @@ runs:
     - name: Generate and sign SBOMs
       if: steps.init.outputs.do_build == 'true'
       id: sbom
-      uses: relizaio/rearm-actions/sbom-sign-scan@main
+      uses: relizaio/rearm-actions/sbom-sign-scan@b570579b24c24a8e1a949e8cfa50b0ddfcde2ccc # v1.0.0
       with:
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: $DOCKER_SHA_256
@@ -229,7 +229,7 @@ runs:
         securesbom_api_key: ${{inputs.securesbom_api_key}}
     - name: Submit metadata to ReARM and Finalize
       if: steps.init.outputs.do_build == 'true'
-      uses: relizaio/rearm-actions/finalize@main
+      uses: relizaio/rearm-actions/finalize@b570579b24c24a8e1a949e8cfa50b0ddfcde2ccc # v1.0.0
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
