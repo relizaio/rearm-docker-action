@@ -208,7 +208,7 @@ runs:
     - name: Generate and sign SBOMs
       if: steps.init.outputs.do_build == 'true'
       id: sbom
-      uses: relizaio/rearm-actions/sbom-sign-scan@cbac9bd9734ee14e2f730cd8b29c1ab2e3fdffc7 # v1.0.1
+      uses: relizaio/rearm-actions/sbom-sign-scan@e54def91db36ff15e6fd1a7c15033ae8bf4eaad5 # v1.0.1
       with:
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: $DOCKER_SHA_256
