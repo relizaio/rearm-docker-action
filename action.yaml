@@ -277,15 +277,15 @@ runs:
         rearm_api_url: ${{inputs.rearm_mirror_api_url}}
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: $DOCKER_SHA_256
-        rearm_build_start: ${{ steps.get-version.outputs.reliza_build_start }}
-        rearm_short_version: ${{ steps.init_rearm.outputs.short_version }}
-        rearm_full_version: ${{ steps.init_rearm.outputs.full_version }}
-        rearm_build_lifecycle: $REARM_BUILD_STATUS
-        commit_list: ${{ steps.init_rearm.outputs.commit_list }}
-        sce_commit: ${{ steps.init_rearm.outputs.sce_commit }}
-        sce_commit_message: ${{ steps.init_rearm.outputs.sce_commit_message }}
-        sce_commit_date: ${{ steps.init_rearm.outputs.sce_commit_date }}
-        sce_vcs_uri: ${{ steps.init_rearm.outputs.sce_vcs_uri }}
+        rearm_build_start: ${{ steps.init.outputs.build_start }}
+        rearm_short_version: ${{ steps.init.outputs.short_version }}
+        rearm_full_version: ${{ steps.init.outputs.full_version }}
+        rearm_build_lifecycle: ${{env.REARM_BUILD_LIFECYCLE}}
+        commit_list: ${{ steps.init.outputs.commit_list }}
+        sce_commit: ${{ steps.init.outputs.sce_commit }}
+        sce_commit_message: ${{ steps.init.outputs.sce_commit_message }}
+        sce_commit_date: ${{ steps.init.outputs.sce_commit_date }}
+        sce_vcs_uri: ${{ steps.init.outputs.sce_vcs_uri }}
         scearts: ${{ steps.sbom.outputs.scearts }}
         odelartsjson: ${{ steps.sbom.outputs.odelartsjson }}
         purl: ${{ steps.sbom.outputs.purl }}
