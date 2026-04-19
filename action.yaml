@@ -134,13 +134,13 @@ runs:
         fetch-depth: 0 
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/rearm-actions/setup-cli@50ecfe47014d1025047ecdcfe9b6a2472c1a2f25 # v1.3.0
+      uses: relizaio/rearm-actions/setup-cli@621f16afae36b263616c8f5d7d87d92d58717850 # v1.3.1
     - name: Display rearm version
       shell: bash
       run: rearm version
     - id: init
       name: Initialize ReARM Flow
-      uses: relizaio/rearm-actions/initialize@50ecfe47014d1025047ecdcfe9b6a2472c1a2f25 # v1.3.0
+      uses: relizaio/rearm-actions/initialize@621f16afae36b263616c8f5d7d87d92d58717850 # v1.3.1
       with: 
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -245,7 +245,7 @@ runs:
     - name: Generate and sign SBOMs
       if: steps.init.outputs.do_build == 'true'
       id: sbom
-      uses: relizaio/rearm-actions/sbom-sign-scan@50ecfe47014d1025047ecdcfe9b6a2472c1a2f25 # v1.3.0
+      uses: relizaio/rearm-actions/sbom-sign-scan@621f16afae36b263616c8f5d7d87d92d58717850 # v1.3.1
       with:
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: $DOCKER_SHA_256
@@ -266,7 +266,7 @@ runs:
         securesbom_api_key: ${{inputs.securesbom_api_key}}
     - name: Submit metadata to ReARM and Finalize
       if: steps.init.outputs.do_build == 'true'
-      uses: relizaio/rearm-actions/finalize@50ecfe47014d1025047ecdcfe9b6a2472c1a2f25 # v1.3.0
+      uses: relizaio/rearm-actions/finalize@621f16afae36b263616c8f5d7d87d92d58717850 # v1.3.1
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -290,7 +290,7 @@ runs:
         component: ${{inputs.rearm_component_id}}
     - name: Submit metadata to ReARM Mirror and Finalize
       if: ${{inputs.push_to_rearm_mirror == 'true' && steps.init.outputs.do_build == 'true'}}
-      uses: relizaio/rearm-actions/finalize@50ecfe47014d1025047ecdcfe9b6a2472c1a2f25 # v1.3.0
+      uses: relizaio/rearm-actions/finalize@621f16afae36b263616c8f5d7d87d92d58717850 # v1.3.1
       with:
         rearm_api_id: ${{ inputs.rearm_mirror_api_id }}
         rearm_api_key: ${{ inputs.rearm_mirror_api_key }}
