@@ -249,7 +249,7 @@ runs:
       uses: relizaio/rearm-actions/sbom-sign-scan@9dceef7dd963e199c07c9e9b452601a3bfefb462 # v1.7.0
       with:
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
-        image_digest: $DOCKER_SHA_256
+        image_digest: ${{ env.DOCKER_SHA_256 }}
         rearm_short_version: ${{ steps.init.outputs.short_version }}
         rearm_full_version: ${{ steps.init.outputs.full_version }}
         enable_sbom: ${{inputs.enable_sbom}}
@@ -273,7 +273,7 @@ runs:
         rearm_api_key: ${{ inputs.rearm_api_key }}
         rearm_api_url: ${{inputs.rearm_api_url}}
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
-        image_digest: $DOCKER_SHA_256
+        image_digest: ${{ env.DOCKER_SHA_256 }}
         rearm_build_start: ${{ steps.init.outputs.build_start }}
         rearm_short_version: ${{ steps.init.outputs.short_version }}
         rearm_full_version: ${{ steps.init.outputs.full_version }}
@@ -297,7 +297,7 @@ runs:
         rearm_api_key: ${{ inputs.rearm_mirror_api_key }}
         rearm_api_url: ${{inputs.rearm_mirror_api_url}}
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
-        image_digest: $DOCKER_SHA_256
+        image_digest: ${{ env.DOCKER_SHA_256 }}
         rearm_build_start: ${{ steps.init.outputs.build_start }}
         rearm_short_version: ${{ steps.init.outputs.short_version }}
         rearm_full_version: ${{ steps.init.outputs.full_version }}
