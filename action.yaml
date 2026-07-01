@@ -131,7 +131,8 @@ runs:
     - name: Checkout
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
-        fetch-depth: 0 
+        fetch-depth: 0
+        persist-credentials: false
     - id: setup-rearm
       name: setup-rearm
       uses: relizaio/rearm-actions/setup-cli@dac3e7752598c46746d9b98e0a4bed76535be9b3 # v1.7.0
@@ -171,9 +172,11 @@ runs:
         password: ${{inputs.registry_password}}
     - name: Validate input list
       shell: bash
+      env:
+        INPUT_PLATFORM_ARCHITECTURES: ${{ inputs.platform_architectures }}
       run: |
         supported_platforms=('linux/amd64' 'linux/arm64' 'linux/s390x' 'linux/arm/v7' 'linux/arm/v6')
-        input_list=($(echo '${{ inputs.platform_architectures }}' | tr ',' '\n'))
+        input_list=($(echo "$INPUT_PLATFORM_ARCHITECTURES" | tr ',' '\n'))
         if [[ -z "$input_list" ]]; then
           echo "Platform architectures list is empty"
           exit 1
@@ -196,12 +199,24 @@ runs:
       shell: bash
       if: ${{env.REARM_DO_BUILD == 'true'}}
       continue-on-error: true
-      run: |
-        cd ${{ github.workspace }}
-        cd ${{ inputs.path }}
-        
-        branch_name=${{github.ref_name}}
-        safe_branch_name=$(echo -n $branch_name | tr -dc '[:alnum:]-_.')
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_IMAGE_NAMESPACE: ${{ inputs.image_namespace }}
+        INPUT_IMAGE_NAME: ${{ inputs.image_name }}
+        INPUT_SHORT_VERSION: ${{ steps.init.outputs.short_version }}
+        INPUT_FULL_VERSION: ${{ steps.init.outputs.full_version }}
+        INPUT_PUSH_LATEST_TAG: ${{ inputs.push_latest_tag }}
+        INPUT_PLATFORM_ARCHITECTURES: ${{ inputs.platform_architectures }}
+        INPUT_DOCKERFILE_NAME: ${{ inputs.dockerfile_name }}
+        INPUT_SUCCESSFUL_BUILD_LIFECYCLE: ${{ inputs.successful_build_lifecycle }}
+      # Only single-line controlled values (docker sha256 digest + lifecycle enum) are
+      # written to GITHUB_ENV below — no newline-injection surface.
+      run: | # zizmor: ignore[github-env]
+        cd "$GITHUB_WORKSPACE"
+        cd "$INPUT_PATH"
+
+        branch_name="$GITHUB_REF_NAME"
+        safe_branch_name=$(echo -n "$branch_name" | tr -dc '[:alnum:]-_.')
         case $safe_branch_name in
 
           master | main)
@@ -213,36 +228,36 @@ runs:
             ;;
         esac
 
-        tags="-t ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.init.outputs.short_version }}"
+        tags="-t $INPUT_IMAGE_NAMESPACE/$INPUT_IMAGE_NAME:$INPUT_SHORT_VERSION"
 
-        if [ "${{inputs.push_latest_tag}}" == "true" ]
+        if [ "$INPUT_PUSH_LATEST_TAG" == "true" ]
         then
-          tags+=" -t ${{inputs.image_namespace}}/${{inputs.image_name}}:$latest_tag"
+          tags+=" -t $INPUT_IMAGE_NAMESPACE/$INPUT_IMAGE_NAME:$latest_tag"
         fi
 
         # push branch tag for main or master
         if [ "$latest_tag" != "$safe_branch_name" ]
         then
-          tags+=" -t ${{inputs.image_namespace}}/${{inputs.image_name}}:$safe_branch_name"
+          tags+=" -t $INPUT_IMAGE_NAMESPACE/$INPUT_IMAGE_NAME:$safe_branch_name"
         fi
-        echo "Building for platforms: ${{ inputs.platform_architectures }}"
+        echo "Building for platforms: $INPUT_PLATFORM_ARCHITECTURES"
         docker \
-          buildx build --push --platform ${{ inputs.platform_architectures }} \
+          buildx build --push --platform "$INPUT_PLATFORM_ARCHITECTURES" \
           $tags \
-          --build-arg VERSION=${{ steps.init.outputs.full_version }} \
-          --build-arg CI_ENV=github${{github.sha}} \
-          --build-arg GIT_COMMIT=${{github.sha}} \
-          --build-arg GIT_BRANCH=${{github.ref_name}} \
-          -f ${{inputs.dockerfile_name}} .
-          
-        
-        # buildx_inspect=$(docker buildx imagetools inspect ${{inputs.image_namespace}}/${{inputs.image_name}}:$latest_tag)
+          --build-arg VERSION="$INPUT_FULL_VERSION" \
+          --build-arg CI_ENV="github$GITHUB_SHA" \
+          --build-arg GIT_COMMIT="$GITHUB_SHA" \
+          --build-arg GIT_BRANCH="$GITHUB_REF_NAME" \
+          -f "$INPUT_DOCKERFILE_NAME" .
+
+
+        # buildx_inspect=$(docker buildx imagetools inspect $INPUT_IMAGE_NAMESPACE/$INPUT_IMAGE_NAME:$latest_tag)
         # echo $buildx_inspect
-        docker_sha_256=$(docker buildx imagetools inspect --format "{{json .Manifest}}" ${{inputs.image_namespace}}/${{inputs.image_name}}:${{ steps.init.outputs.short_version }} | jq -r '.digest')
-       
+        docker_sha_256=$(docker buildx imagetools inspect --format "{{json .Manifest}}" "$INPUT_IMAGE_NAMESPACE/$INPUT_IMAGE_NAME:$INPUT_SHORT_VERSION" | jq -r '.digest')
+
         # save sha256 to env var
-        echo "DOCKER_SHA_256=$docker_sha_256" >> $GITHUB_ENV
-        echo "REARM_BUILD_LIFECYCLE=${{inputs.successful_build_lifecycle}}" >> $GITHUB_ENV
+        echo "DOCKER_SHA_256=$docker_sha_256" >> "$GITHUB_ENV"
+        echo "REARM_BUILD_LIFECYCLE=$INPUT_SUCCESSFUL_BUILD_LIFECYCLE" >> "$GITHUB_ENV"
     - name: Generate and sign SBOMs
       if: steps.init.outputs.do_build == 'true'
       id: sbom
