@@ -128,6 +128,10 @@ inputs:
     required: false
     default: 'false'
     description: "Allow rebuilding of existing component releases"
+  disable_maven_search:
+    required: false
+    default: 'false'
+    description: "On SBOM action, when true, sets SEARCH_MAVEN_ORG=false for the container SBOM cdxgen run so jars missing pom metadata are not looked up on search.maven.org. Avoids long stalls when Maven search is slow or unavailable."
 runs:
   using: "composite"
   steps:
@@ -138,13 +142,13 @@ runs:
         persist-credentials: false
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/rearm-actions/setup-cli@3de894a01914f7092d10999fdabb5768784db855 # next
+      uses: relizaio/rearm-actions/setup-cli@9cb95faffeb021e8ee0eebe0ecb4a8898b1103b0 # 1.8.0
     - name: Display rearm version
       shell: bash
       run: rearm version
     - id: init
       name: Initialize ReARM Flow
-      uses: relizaio/rearm-actions/initialize@3de894a01914f7092d10999fdabb5768784db855 # next
+      uses: relizaio/rearm-actions/initialize@9cb95faffeb021e8ee0eebe0ecb4a8898b1103b0 # 1.8.0
       with: 
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -265,7 +269,7 @@ runs:
     - name: Generate and sign SBOMs
       if: steps.init.outputs.do_build == 'true'
       id: sbom
-      uses: relizaio/rearm-actions/sbom-sign-scan@3de894a01914f7092d10999fdabb5768784db855 # next
+      uses: relizaio/rearm-actions/sbom-sign-scan@9cb95faffeb021e8ee0eebe0ecb4a8898b1103b0 # 1.8.0
       with:
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: ${{ env.DOCKER_SHA_256 }}
@@ -284,9 +288,10 @@ runs:
         securesbom_pub_key_id: ${{inputs.securesbom_pub_key_id}}
         securesbom_host: ${{inputs.securesbom_host}}
         securesbom_api_key: ${{inputs.securesbom_api_key}}
+        disable_maven_search: ${{ inputs.disable_maven_search }}
     - name: Submit metadata to ReARM and Finalize
       if: steps.init.outputs.do_build == 'true'
-      uses: relizaio/rearm-actions/finalize@3de894a01914f7092d10999fdabb5768784db855 # next
+      uses: relizaio/rearm-actions/finalize@9cb95faffeb021e8ee0eebe0ecb4a8898b1103b0 # 1.8.0
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -310,7 +315,7 @@ runs:
         component: ${{inputs.rearm_component_id}}
     - name: Submit metadata to ReARM Mirror and Finalize
       if: ${{inputs.push_to_rearm_mirror == 'true' && steps.init.outputs.do_build == 'true'}}
-      uses: relizaio/rearm-actions/finalize@3de894a01914f7092d10999fdabb5768784db855 # next
+      uses: relizaio/rearm-actions/finalize@9cb95faffeb021e8ee0eebe0ecb4a8898b1103b0 # 1.8.0
       with:
         rearm_api_id: ${{ inputs.rearm_mirror_api_id }}
         rearm_api_key: ${{ inputs.rearm_mirror_api_key }}
