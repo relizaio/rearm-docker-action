@@ -199,7 +199,8 @@ runs:
           exit 1
         fi
         done
-    - name: Build and push docker container to Rearm Hub Registry
+    - name: Build and push docker container to ReARM
+      id: build
       shell: bash
       if: ${{env.REARM_DO_BUILD == 'true'}}
       continue-on-error: true
@@ -262,8 +263,12 @@ runs:
         # save sha256 to env var
         echo "DOCKER_SHA_256=$docker_sha_256" >> "$GITHUB_ENV"
         echo "REARM_BUILD_LIFECYCLE=$INPUT_SUCCESSFUL_BUILD_LIFECYCLE" >> "$GITHUB_ENV"
+    - name: Report build failure
+      if: steps.build.outcome == 'failure'
+      shell: bash
+      run: echo "::error::Docker build failed. The release will be recorded as REJECTED; see the build step above for the cause."
     - name: Generate and sign SBOMs
-      if: steps.init.outputs.do_build == 'true'
+      if: steps.init.outputs.do_build == 'true' && env.DOCKER_SHA_256 != ''
       id: sbom
       uses: relizaio/rearm-actions/sbom-sign-scan@042ecc05633174c505ffe30ced465bf6b62bff3b # 1.8.0
       with:
