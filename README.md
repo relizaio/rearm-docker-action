@@ -34,6 +34,9 @@ The action supports the following inputs:
 - `rearm_component_id`: component UUID if an org-wide key is used.
 - `push_latest_tag`: Whether to push image with 'latest' tag also, optional, default: `true`
 - `platform_architectures`: A comma-separated list of platform architectures, optional, default: `'linux/amd64'`; supported platforms: `'linux/amd64 linux/arm64 linux/s390x linux/arm/v7 linux/arm/v6'`
+- `enable_registry_cache`: Use a buildx registry cache (`type=registry`) for Docker layers, optional, default: `false`. The cache is stored as a separate tag in your registry, has no size limit or expiry, and is shared across branches. Cache export errors do not fail the build.
+- `registry_cache_ref`: Image reference to store the cache under, optional, default: `<image_namespace>/<image_name>:buildcache`. Must be on a registry the action is logged in to (i.e. `registry_host` or Docker Hub).
+- `registry_cache_mode`: `max` (cache all intermediate layers, including multi-stage builds) or `min` (only layers of the final image), optional, default: `max`.
 - `rearm_api_url`: ReARM API URL, optional, default: `https://demo.rearmhq.com`.
 - `ci_metadata`: Metadata for CI run, (Optional - default is GitHub).
 - `enable_sbom`: Generates SBOM and stores it along with the artifact, optional, default: `false`.

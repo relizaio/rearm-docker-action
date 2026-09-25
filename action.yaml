@@ -52,6 +52,18 @@ inputs:
     description: "comma separated list of platform architectures you want to build the image for, default is linux/amd64"
     required: false
     default: 'linux/amd64'
+  enable_registry_cache:
+    description: "Set to true to use a buildx registry cache (type=registry) for Docker layers. The cache is stored as a separate tag in the registry and is shared across branches"
+    required: false
+    default: 'false'
+  registry_cache_ref:
+    description: "Image reference to store the build cache under. Must be on a registry the action is logged in to. Default is <image_namespace>/<image_name>:buildcache"
+    required: false
+    default: ''
+  registry_cache_mode:
+    description: "Cache export mode: max (cache all intermediate layers, including multi-stage) or min (only layers of the final image), default is max"
+    required: false
+    default: 'max'
   enable_sbom:
     required: false
     default: 'false'
@@ -178,7 +190,21 @@ runs:
       shell: bash
       env:
         INPUT_PLATFORM_ARCHITECTURES: ${{ inputs.platform_architectures }}
+        INPUT_ENABLE_REGISTRY_CACHE: ${{ inputs.enable_registry_cache }}
+        INPUT_REGISTRY_CACHE_REF: ${{ inputs.registry_cache_ref }}
+        INPUT_REGISTRY_CACHE_MODE: ${{ inputs.registry_cache_mode }}
       run: |
+        if [ "$INPUT_ENABLE_REGISTRY_CACHE" == "true" ]; then
+          if [[ "$INPUT_REGISTRY_CACHE_MODE" != "min" && "$INPUT_REGISTRY_CACHE_MODE" != "max" ]]; then
+            echo "registry_cache_mode must be min or max, got: $INPUT_REGISTRY_CACHE_MODE"
+            exit 1
+          fi
+          # the ref is embedded into buildx CSV cache options, so commas and whitespace are not allowed
+          if [[ "$INPUT_REGISTRY_CACHE_REF" =~ [,[:space:]] ]]; then
+            echo "registry_cache_ref must not contain commas or whitespace"
+            exit 1
+          fi
+        fi
         supported_platforms=('linux/amd64' 'linux/arm64' 'linux/s390x' 'linux/arm/v7' 'linux/arm/v6')
         input_list=($(echo "$INPUT_PLATFORM_ARCHITECTURES" | tr ',' '\n'))
         if [[ -z "$input_list" ]]; then
@@ -214,6 +240,9 @@ runs:
         INPUT_PLATFORM_ARCHITECTURES: ${{ inputs.platform_architectures }}
         INPUT_DOCKERFILE_NAME: ${{ inputs.dockerfile_name }}
         INPUT_SUCCESSFUL_BUILD_LIFECYCLE: ${{ inputs.successful_build_lifecycle }}
+        INPUT_ENABLE_REGISTRY_CACHE: ${{ inputs.enable_registry_cache }}
+        INPUT_REGISTRY_CACHE_REF: ${{ inputs.registry_cache_ref }}
+        INPUT_REGISTRY_CACHE_MODE: ${{ inputs.registry_cache_mode }}
       # Only single-line controlled values (docker sha256 digest + lifecycle enum) are
       # written to GITHUB_ENV below — no newline-injection surface.
       run: | # zizmor: ignore[github-env]
@@ -245,10 +274,22 @@ runs:
         then
           tags+=" -t $INPUT_IMAGE_NAMESPACE/$INPUT_IMAGE_NAME:$safe_branch_name"
         fi
+        cache_args=()
+        if [ "$INPUT_ENABLE_REGISTRY_CACHE" == "true" ]
+        then
+          cache_ref="${INPUT_REGISTRY_CACHE_REF:-$INPUT_IMAGE_NAMESPACE/$INPUT_IMAGE_NAME:buildcache}"
+          echo "Using registry cache: $cache_ref (mode=$INPUT_REGISTRY_CACHE_MODE)"
+          cache_args+=(--cache-from "type=registry,ref=$cache_ref")
+          # image-manifest + oci-mediatypes keep the cache compatible with registries like ECR;
+          # ignore-error prevents a failed cache export from failing an otherwise successful build
+          cache_args+=(--cache-to "type=registry,ref=$cache_ref,mode=$INPUT_REGISTRY_CACHE_MODE,image-manifest=true,oci-mediatypes=true,ignore-error=true")
+        fi
+
         echo "Building for platforms: $INPUT_PLATFORM_ARCHITECTURES"
         docker \
           buildx build --push --platform "$INPUT_PLATFORM_ARCHITECTURES" \
           $tags \
+          "${cache_args[@]}" \
           --build-arg VERSION="$INPUT_FULL_VERSION" \
           --build-arg CI_ENV="github$GITHUB_SHA" \
           --build-arg GIT_COMMIT="$GITHUB_SHA" \
