@@ -150,13 +150,13 @@ runs:
         persist-credentials: false
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/rearm-actions/setup-cli@3cf6b1400f4381b93f1f38dddd28a481b7b446a3 # next
+      uses: relizaio/rearm-actions/setup-cli@5e1e70e0cb5ad4bc2e9e61e045401e6ce0b2ce7f # next
     - name: Display rearm version
       shell: bash
       run: rearm version
     - id: init
       name: Initialize ReARM Flow
-      uses: relizaio/rearm-actions/initialize@3cf6b1400f4381b93f1f38dddd28a481b7b446a3 # next
+      uses: relizaio/rearm-actions/initialize@5e1e70e0cb5ad4bc2e9e61e045401e6ce0b2ce7f # next
       with: 
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -311,7 +311,7 @@ runs:
     - name: Generate and sign SBOMs
       if: steps.init.outputs.do_build == 'true' && env.DOCKER_SHA_256 != ''
       id: sbom
-      uses: relizaio/rearm-actions/sbom-sign-scan@3cf6b1400f4381b93f1f38dddd28a481b7b446a3 # next
+      uses: relizaio/rearm-actions/sbom-sign-scan@5e1e70e0cb5ad4bc2e9e61e045401e6ce0b2ce7f # next
       with:
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: ${{ env.DOCKER_SHA_256 }}
@@ -332,7 +332,7 @@ runs:
         securesbom_api_key: ${{inputs.securesbom_api_key}}
     - name: Submit metadata to ReARM and Finalize
       if: steps.init.outputs.do_build == 'true'
-      uses: relizaio/rearm-actions/finalize@3cf6b1400f4381b93f1f38dddd28a481b7b446a3 # next
+      uses: relizaio/rearm-actions/finalize@5e1e70e0cb5ad4bc2e9e61e045401e6ce0b2ce7f # next
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -356,7 +356,7 @@ runs:
         component: ${{inputs.rearm_component_id}}
     - name: Submit metadata to ReARM Mirror and Finalize
       if: ${{inputs.push_to_rearm_mirror == 'true' && steps.init.outputs.do_build == 'true'}}
-      uses: relizaio/rearm-actions/finalize@3cf6b1400f4381b93f1f38dddd28a481b7b446a3 # next
+      uses: relizaio/rearm-actions/finalize@5e1e70e0cb5ad4bc2e9e61e045401e6ce0b2ce7f # next
       with:
         rearm_api_id: ${{ inputs.rearm_mirror_api_id }}
         rearm_api_key: ${{ inputs.rearm_mirror_api_key }}
