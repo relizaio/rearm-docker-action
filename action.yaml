@@ -255,6 +255,7 @@ runs:
         INPUT_ENABLE_REGISTRY_CACHE: ${{ inputs.enable_registry_cache }}
         INPUT_REGISTRY_CACHE_REF: ${{ inputs.registry_cache_ref }}
         INPUT_REGISTRY_CACHE_MODE: ${{ inputs.registry_cache_mode }}
+        INPUT_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       # Only single-line controlled values (docker sha256 digest + lifecycle enum) are
       # written to GITHUB_ENV below — no newline-injection surface.
       run: | # zizmor: ignore[github-env]
@@ -290,11 +291,13 @@ runs:
         if [ "$INPUT_ENABLE_REGISTRY_CACHE" == "true" ]
         then
           cache_ref="${INPUT_REGISTRY_CACHE_REF:-$INPUT_IMAGE_NAMESPACE/$INPUT_IMAGE_NAME:buildcache}"
-          echo "Using registry cache: $cache_ref (mode=$INPUT_REGISTRY_CACHE_MODE)"
-          cache_args+=(--cache-from "type=registry,ref=$cache_ref")
-          # image-manifest + oci-mediatypes keep the cache compatible with registries like ECR;
-          # ignore-error prevents a failed cache export from failing an otherwise successful build
-          cache_args+=(--cache-to "type=registry,ref=$cache_ref,mode=$INPUT_REGISTRY_CACHE_MODE,image-manifest=true,oci-mediatypes=true,ignore-error=true")
+          # one cache per branch (tag-safe name), falling back to the default branch's cache
+          branch_tag=$(printf '%s' "$GITHUB_REF_NAME" | tr -c 'A-Za-z0-9_.-' '-' | cut -c1-100)
+          if [ "$GITHUB_REF_NAME" == "$INPUT_DEFAULT_BRANCH" ]; then write_ref="$cache_ref"; else write_ref="${cache_ref}-${branch_tag}"; fi
+          echo "Using registry cache: write $write_ref, read $write_ref then $cache_ref (mode=$INPUT_REGISTRY_CACHE_MODE)"
+          cache_args+=(--cache-from "type=registry,ref=$write_ref")
+          [ "$write_ref" != "$cache_ref" ] && cache_args+=(--cache-from "type=registry,ref=$cache_ref")
+          cache_args+=(--cache-to "type=registry,ref=$write_ref,mode=$INPUT_REGISTRY_CACHE_MODE,image-manifest=true,oci-mediatypes=true,ignore-error=true")
         fi
 
         echo "Building for platforms: $INPUT_PLATFORM_ARCHITECTURES"
