@@ -71,7 +71,7 @@ inputs:
   source_code_sbom_type:
     required: false
     default: 'none'
-    description: "Generates SBOM based on source code analysis, possible values: npm, other, none"
+    description: "Generates SBOM based on source code analysis, possible values: npm, helm, go, java, other, custom, none"
   enable_public_cosign_sigstore:
     required: false
     default: 'false'
@@ -140,6 +140,14 @@ inputs:
     required: false
     default: 'false'
     description: "Allow rebuilding of existing component releases"
+  version_placeholder:
+    required: false
+    default: 'Version_Managed_By_CI_AND_Reliza'
+    description: "java source SBOM: literal in pom.xml replaced with the ReARM full version before generation; no-op if absent"
+  include_test_scope:
+    required: false
+    default: 'false'
+    description: "java source SBOM: include test-scope dependencies"
 runs:
   using: "composite"
   steps:
@@ -150,13 +158,13 @@ runs:
         persist-credentials: false
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/rearm-actions/setup-cli@8ca87bcc3b62c76f63ba57d49ba3bc5dad3470f4 # next
+      uses: relizaio/rearm-actions/setup-cli@810583d3f61dd0935bcc3fd42c38b02a1f180233 # next
     - name: Display rearm version
       shell: bash
       run: rearm version
     - id: init
       name: Initialize ReARM Flow
-      uses: relizaio/rearm-actions/initialize@8ca87bcc3b62c76f63ba57d49ba3bc5dad3470f4 # next
+      uses: relizaio/rearm-actions/initialize@810583d3f61dd0935bcc3fd42c38b02a1f180233 # next
       with: 
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -311,7 +319,7 @@ runs:
     - name: Generate and sign SBOMs
       if: steps.init.outputs.do_build == 'true' && env.DOCKER_SHA_256 != ''
       id: sbom
-      uses: relizaio/rearm-actions/sbom-sign-scan@8ca87bcc3b62c76f63ba57d49ba3bc5dad3470f4 # next
+      uses: relizaio/rearm-actions/sbom-sign-scan@810583d3f61dd0935bcc3fd42c38b02a1f180233 # next
       with:
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: ${{ env.DOCKER_SHA_256 }}
@@ -330,9 +338,11 @@ runs:
         securesbom_pub_key_id: ${{inputs.securesbom_pub_key_id}}
         securesbom_host: ${{inputs.securesbom_host}}
         securesbom_api_key: ${{inputs.securesbom_api_key}}
+        version_placeholder: ${{inputs.version_placeholder}}
+        include_test_scope: ${{inputs.include_test_scope}}
     - name: Submit metadata to ReARM and Finalize
       if: steps.init.outputs.do_build == 'true'
-      uses: relizaio/rearm-actions/finalize@8ca87bcc3b62c76f63ba57d49ba3bc5dad3470f4 # next
+      uses: relizaio/rearm-actions/finalize@810583d3f61dd0935bcc3fd42c38b02a1f180233 # next
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -356,7 +366,7 @@ runs:
         component: ${{inputs.rearm_component_id}}
     - name: Submit metadata to ReARM Mirror and Finalize
       if: ${{inputs.push_to_rearm_mirror == 'true' && steps.init.outputs.do_build == 'true'}}
-      uses: relizaio/rearm-actions/finalize@8ca87bcc3b62c76f63ba57d49ba3bc5dad3470f4 # next
+      uses: relizaio/rearm-actions/finalize@810583d3f61dd0935bcc3fd42c38b02a1f180233 # next
       with:
         rearm_api_id: ${{ inputs.rearm_mirror_api_id }}
         rearm_api_key: ${{ inputs.rearm_mirror_api_key }}
