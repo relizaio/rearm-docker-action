@@ -158,13 +158,13 @@ runs:
         persist-credentials: false
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/rearm-actions/setup-cli@bece29f2d079eb2112ba69457003840aa11d4aa2 # v1.9.0
+      uses: relizaio/rearm-actions/setup-cli@58e3b37e7afe4a3ad32d932e8a3a364079c76a99 # v1.9.0
     - name: Display rearm version
       shell: bash
       run: rearm version
     - id: init
       name: Initialize ReARM Flow
-      uses: relizaio/rearm-actions/initialize@bece29f2d079eb2112ba69457003840aa11d4aa2 # v1.9.0
+      uses: relizaio/rearm-actions/initialize@58e3b37e7afe4a3ad32d932e8a3a364079c76a99 # v1.9.0
       with: 
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -326,7 +326,7 @@ runs:
     - name: Generate and sign SBOMs
       if: steps.init.outputs.do_build == 'true' && env.DOCKER_SHA_256 != ''
       id: sbom
-      uses: relizaio/rearm-actions/sbom-sign-scan@bece29f2d079eb2112ba69457003840aa11d4aa2 # v1.9.0
+      uses: relizaio/rearm-actions/sbom-sign-scan@58e3b37e7afe4a3ad32d932e8a3a364079c76a99 # v1.9.0
       with:
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: ${{ env.DOCKER_SHA_256 }}
@@ -349,7 +349,7 @@ runs:
         include_test_scope: ${{inputs.include_test_scope}}
     - name: Submit metadata to ReARM and Finalize
       if: steps.init.outputs.do_build == 'true'
-      uses: relizaio/rearm-actions/finalize@bece29f2d079eb2112ba69457003840aa11d4aa2 # v1.9.0
+      uses: relizaio/rearm-actions/finalize@58e3b37e7afe4a3ad32d932e8a3a364079c76a99 # v1.9.0
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
@@ -360,7 +360,7 @@ runs:
         rearm_short_version: ${{ steps.init.outputs.short_version }}
         rearm_full_version: ${{ steps.init.outputs.full_version }}
         rearm_build_lifecycle: ${{env.REARM_BUILD_LIFECYCLE}}
-        commit_list: ${{ steps.init.outputs.commit_list }}
+        commit_list_file: ${{ steps.init.outputs.commit_list_file }}
         sce_commit: ${{ steps.init.outputs.sce_commit }}
         sce_commit_message: ${{ steps.init.outputs.sce_commit_message }}
         sce_commit_date: ${{ steps.init.outputs.sce_commit_date }}
@@ -373,7 +373,7 @@ runs:
         component: ${{inputs.rearm_component_id}}
     - name: Submit metadata to ReARM Mirror and Finalize
       if: ${{inputs.push_to_rearm_mirror == 'true' && steps.init.outputs.do_build == 'true'}}
-      uses: relizaio/rearm-actions/finalize@bece29f2d079eb2112ba69457003840aa11d4aa2 # v1.9.0
+      uses: relizaio/rearm-actions/finalize@58e3b37e7afe4a3ad32d932e8a3a364079c76a99 # v1.9.0
       with:
         rearm_api_id: ${{ inputs.rearm_mirror_api_id }}
         rearm_api_key: ${{ inputs.rearm_mirror_api_key }}
@@ -384,7 +384,7 @@ runs:
         rearm_short_version: ${{ steps.init.outputs.short_version }}
         rearm_full_version: ${{ steps.init.outputs.full_version }}
         rearm_build_lifecycle: ${{env.REARM_BUILD_LIFECYCLE}}
-        commit_list: ${{ steps.init.outputs.commit_list }}
+        commit_list_file: ${{ steps.init.outputs.commit_list_file }}
         sce_commit: ${{ steps.init.outputs.sce_commit }}
         sce_commit_message: ${{ steps.init.outputs.sce_commit_message }}
         sce_commit_date: ${{ steps.init.outputs.sce_commit_date }}
