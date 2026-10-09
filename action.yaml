@@ -21,15 +21,25 @@ inputs:
     description: "Name of the image"
     required: true
   rearm_api_id:
-    description: "ReARM API ID"
-    required: true
+    description: "ReARM API ID (leave empty with rearm_auth: github-oidc)"
+    required: false
+    default: ""
   rearm_api_key:
-    description: "ReARM API KEY"
-    required: true
+    description: "ReARM API KEY (leave empty with rearm_auth: github-oidc)"
+    required: false
+    default: ""
   rearm_api_url:
     description: "ReARM API URL"
     required: false
     default: 'https://demo.rearmhq.com'
+  rearm_auth:
+    description: "Credential mode passed to the ReARM CLI: key (rearm_api_id and rearm_api_key), or github-oidc (the identity token GitHub issues to the job, no secret; the calling job needs permissions id-token: write and the ReARM organization a trust rule for this repository). Empty picks the mode from the credentials present."
+    required: false
+    default: ""
+  rearm_org:
+    description: "ReARM organization uuid, for github-oidc only when several organizations trust the same repository"
+    required: false
+    default: ""
   path:
     description: "Path to the relative to root of the repo (default is '.')"
     required: false
@@ -109,15 +119,25 @@ inputs:
     default: 'false'
     description: "Push to ReARM mirror"
   rearm_mirror_api_id:
-    description: "ReARM Mirror API ID"
-    required: true
+    description: "ReARM Mirror API ID (leave empty with rearm_mirror_auth: github-oidc)"
+    required: false
+    default: ""
   rearm_mirror_api_key:
-    description: "ReARM Mirror API KEY"
-    required: true
+    description: "ReARM Mirror API KEY (leave empty with rearm_mirror_auth: github-oidc)"
+    required: false
+    default: ""
   rearm_mirror_api_url:
     description: "ReARM Mirror API URL"
     required: false
     default: 'https://demo.rearmhq.com'
+  rearm_mirror_auth:
+    description: "Credential mode for the ReARM Mirror, as rearm_auth (github-oidc needs a trust rule on the mirror instance too)"
+    required: false
+    default: ""
+  rearm_mirror_org:
+    description: "ReARM Mirror organization uuid, for github-oidc only when several organizations trust the same repository"
+    required: false
+    default: ""    
   rearm_mirror_component_id:
     description: "Component UUID on ReARM Mirror for this release if org-wide key is used and not relying on component mapping"
     required: false
@@ -158,17 +178,19 @@ runs:
         persist-credentials: false
     - id: setup-rearm
       name: setup-rearm
-      uses: relizaio/rearm-actions/setup-cli@0ae3bde31adddb9d2d42a5544ecc08a6083e8306 # v1.9.0
+      uses: relizaio/rearm-actions/setup-cli@441a3590e8df05dd0836703602995b04ad2701b1 # v1.9.0
     - name: Display rearm version
       shell: bash
       run: rearm version
     - id: init
       name: Initialize ReARM Flow
-      uses: relizaio/rearm-actions/initialize@0ae3bde31adddb9d2d42a5544ecc08a6083e8306 # v1.9.0
+      uses: relizaio/rearm-actions/initialize@441a3590e8df05dd0836703602995b04ad2701b1 # v1.9.0
       with: 
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
         rearm_api_url: ${{inputs.rearm_api_url}}
+        rearm_auth: ${{inputs.rearm_auth}}
+        rearm_org: ${{inputs.rearm_org}}
         repo_path: ${{inputs.path}}
         component: ${{inputs.rearm_component_id}}
         create_component: ${{inputs.create_component}}
@@ -326,7 +348,7 @@ runs:
     - name: Generate and sign SBOMs
       if: steps.init.outputs.do_build == 'true' && env.DOCKER_SHA_256 != ''
       id: sbom
-      uses: relizaio/rearm-actions/sbom-sign-scan@0ae3bde31adddb9d2d42a5544ecc08a6083e8306 # v1.9.0
+      uses: relizaio/rearm-actions/sbom-sign-scan@441a3590e8df05dd0836703602995b04ad2701b1 # v1.9.0
       with:
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: ${{ env.DOCKER_SHA_256 }}
@@ -349,11 +371,13 @@ runs:
         include_test_scope: ${{inputs.include_test_scope}}
     - name: Submit metadata to ReARM and Finalize
       if: steps.init.outputs.do_build == 'true'
-      uses: relizaio/rearm-actions/finalize@0ae3bde31adddb9d2d42a5544ecc08a6083e8306 # v1.9.0
+      uses: relizaio/rearm-actions/finalize@441a3590e8df05dd0836703602995b04ad2701b1 # v1.9.0
       with:
         rearm_api_id: ${{ inputs.rearm_api_id }}
         rearm_api_key: ${{ inputs.rearm_api_key }}
         rearm_api_url: ${{inputs.rearm_api_url}}
+        rearm_auth: ${{inputs.rearm_auth}}
+        rearm_org: ${{inputs.rearm_org}}
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: ${{ env.DOCKER_SHA_256 }}
         rearm_build_start: ${{ steps.init.outputs.build_start }}
@@ -369,15 +393,16 @@ runs:
         odelartsjson: ${{ steps.sbom.outputs.odelartsjson }}
         purl: ${{ steps.sbom.outputs.purl }}
         repo_path: ${{inputs.path}}
-        finalize_release: "true"
         component: ${{inputs.rearm_component_id}}
     - name: Submit metadata to ReARM Mirror and Finalize
       if: ${{inputs.push_to_rearm_mirror == 'true' && steps.init.outputs.do_build == 'true'}}
-      uses: relizaio/rearm-actions/finalize@0ae3bde31adddb9d2d42a5544ecc08a6083e8306 # v1.9.0
+      uses: relizaio/rearm-actions/finalize@441a3590e8df05dd0836703602995b04ad2701b1 # v1.9.0
       with:
         rearm_api_id: ${{ inputs.rearm_mirror_api_id }}
         rearm_api_key: ${{ inputs.rearm_mirror_api_key }}
         rearm_api_url: ${{inputs.rearm_mirror_api_url}}
+        rearm_auth: ${{inputs.rearm_mirror_auth}}
+        rearm_org: ${{inputs.rearm_mirror_org}}
         image_full_name: ${{inputs.image_namespace}}/${{inputs.image_name}}
         image_digest: ${{ env.DOCKER_SHA_256 }}
         rearm_build_start: ${{ steps.init.outputs.build_start }}
@@ -393,7 +418,6 @@ runs:
         odelartsjson: ${{ steps.sbom.outputs.odelartsjson }}
         purl: ${{ steps.sbom.outputs.purl }}
         repo_path: ${{inputs.path}}
-        finalize_release: "true"
         component: ${{inputs.rearm_mirror_component_id}}
 post:
   shell: bash

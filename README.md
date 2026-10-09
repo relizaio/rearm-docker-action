@@ -22,8 +22,10 @@ steps:
 ## Inputs
 The action supports the following inputs:
 
-- `rearm_api_id`: The component API ID obtained from Rearm.
-- `rearm_api_key`: The component API Key obtained from Rearm.
+- `rearm_api_id`: The component API ID obtained from Rearm (leave empty with `rearm_auth: github-oidc`).
+- `rearm_api_key`: The component API Key obtained from Rearm (leave empty with `rearm_auth: github-oidc`).
+- `rearm_auth`: Credential mode, optional: `key` (API ID and key), or `github-oidc` (the job's GitHub identity token; needs `id-token: write` and a ReARM trust rule). Empty picks the mode from the credentials present.
+- `rearm_org`: ReARM organization UUID, optional; only for `github-oidc` when several organizations trust the same repository.
 - `registry_username`: Username for the image registry.
 - `registry_password`: Password for the image registry.
 - `registry_host`: Image registry host.
@@ -49,3 +51,25 @@ The action supports the following inputs:
 - `securesbom_pub_key_id`: Public key ID to sign with SecureSBOM by ShiftLeftCyber, optional, default: empty.
 - `securesbom_host`: SecureSBOM (by ShiftLeftCyber) host, optional, default: empty.
 - `securesbom_api_key`: SecureSBOM (by ShiftLeftCyber) API key, optional, default: empty.
+
+### Federated (keyless) authentication
+
+Instead of an API key, the action can authenticate to ReARM with the identity token GitHub issues to the job (`rearm_auth: github-oidc`). Grant the job `id-token: write`, create a trust rule for this repository in the ReARM organization, and leave `rearm_api_id` and `rearm_api_key` out:
+
+```yaml
+permissions:
+  contents: read
+  id-token: write
+steps:
+- uses: relizaio/rearm-docker-action@<ref>
+  with:
+    rearm_auth: github-oidc
+    rearm_api_url: https://your.rearm.instance
+    registry_username: <image-registry-username>
+    registry_password: <image-registry-password>
+    registry_host: <image-registry-host>
+    image_namespace: <registry-namespace>
+    image_name: <image-name>
+```
+
+Set `rearm_org` only when several ReARM organizations trust the same repository. The ReARM Mirror takes the same settings through `rearm_mirror_auth` and `rearm_mirror_org`, and needs its own trust rule on the mirror instance.
